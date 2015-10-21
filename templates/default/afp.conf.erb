@@ -1,0 +1,14 @@
+;
+; Netatalk 3.x configuration file
+;
+
+[Global]
+<% if node['netatalk']['spotlight'] %>
+    spotlight = <%= node['netatalk']['spotlight'] ? 'yes' : 'no' %>
+
+<% end %>
+; [Homes]
+; basedir regex = /home
+
+; [My AFP Volume]
+; path = /path/to/volume
