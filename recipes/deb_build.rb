@@ -25,12 +25,16 @@
 # THE SOFTWARE.
 
 apt_package node['netatalk']['deb_build']['dependencies']
+apt_package 'avahi-daemon'
+
+group node['netatalk']['deb_build']['user']['group']
 
 user node['netatalk']['deb_build']['user']['username'] do
   comment 'A user to build packages'
   home node['netatalk']['deb_build']['user']['home']
   manage_home true
   group node['netatalk']['deb_build']['user']['group']
+  shell '/bin/bash'
 end
 
 group 'sudo' do
@@ -44,4 +48,51 @@ git 'netatalk-debian' do
   action :sync
   destination "#{node['netatalk']['deb_build']['user']['home']}/netatalk-debian"
   user node['netatalk']['deb_build']['user']['username']
+end
+
+build_dir = node['netatalk']['deb_build']['user']['home']
+
+bash 'build_debs' do
+  cwd "#{build_dir}/netatalk-debian"
+  code 'debuild -b -uc -us'
+  action :run
+  creates "#{build_dir}/netatalk_3.1.7-1_amd64.deb"
+end
+
+ruby_block 'reload_built_debs' do
+  block do
+    node.default['netatalk']['deb_build']['built'] = Dir["#{build_dir}/*.deb"]
+    ns = node['netatalk']['deb_build']['built'].map { |d| ::File.basename(d) }
+    libatalk = run_context.resource_collection.find(dpkg_package: 'libatalk')
+    libatalkd = run_context.resource_collection.find(dpkg_package: 'libatalk-d')
+    netatalk = run_context.resource_collection.find(dpkg_package: 'netatalkdeb')
+
+    libatalk.source node['netatalk']['deb_build']['built'][1]
+    libatalk.package_name ns[1]
+    libatalkd.source node['netatalk']['deb_build']['built'][0]
+    libatalkd.package_name ns[0]
+    netatalk.source node['netatalk']['deb_build']['built'][2]
+    netatalk.package_name ns[2]
+  end
+end
+
+dpkg_package 'libatalk' do
+  source nil
+  package_name nil
+  action :install
+  subscribes :install, 'ruby_block[reload_built_debs]', :immediately
+end
+
+dpkg_package 'libatalk-d' do
+  source nil
+  package_name nil
+  action :install
+  subscribes :install, 'dpkg_package[libatalk]', :immediately
+end
+
+dpkg_package 'netatalkdeb' do
+  source nil
+  package_name nil
+  action :install
+  subscribes :install, 'ruby_block[reload_built_debs]', :immediately
 end

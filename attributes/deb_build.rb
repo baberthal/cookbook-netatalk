@@ -5,6 +5,7 @@ default['netatalk']['deb_build'] = {
     'home' => '/home/builder',
     'group' => 'builder'
   },
+  'built' => [],
   'dependencies' => %w(build-essential
                        devscripts
                        debhelper

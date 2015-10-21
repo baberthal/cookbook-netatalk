@@ -33,6 +33,7 @@ suites:
 
   - name: deb_build
     run_list:
+      - recipe[apt]
       - recipe[netatalk::default]
     attributes:
       netatalk:
@@ -40,6 +41,5 @@ suites:
     includes: [
       'ubuntu-15.04',
       'debian-7.8',
-      'ubuntu-14.04',
       'debian-8.1'
     ]
