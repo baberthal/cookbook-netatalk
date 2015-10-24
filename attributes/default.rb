@@ -14,7 +14,7 @@ default['netatalk']['package_name'] = 'netatalk'
 default['netatalk']['built_rpms'] = []
 
 case node['netatalk']['install_method']
-when 'rpm-src', 'package'
+when 'rpm-src', 'package', 'deb_build'
   default['netatalk']['conf_file'] = '/etc/netatalk/afp.conf'
 when 'source'
   default['netatalk']['conf_file'] = '/usr/local/etc/afp.conf'
